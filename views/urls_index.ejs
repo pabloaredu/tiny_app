@@ -9,7 +9,6 @@
     <% for(var urlDatabase in urls) { %>
       <li><%= urls[urlDatabase] + ": " + urlDatabase %>
       <form action='/urls/<%=urlDatabase%>/delete' method='POST'>
-
         <button type='submit'>Delete</button>
       </form>
     </li>
