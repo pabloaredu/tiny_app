@@ -11,13 +11,13 @@ var urlDatabase = {
 };
 
 
-// function saveURL(shortURL, longURL) {
-//   urlDatabase[shortURL] = longURL;
-// }
+function saveURL(shortURL, longURL) {
+  urlDatabase[shortURL] = longURL;
+}
 
-// function loadURL(shortURL) {
-//   return urlDatabase[shortURL];
-// }
+function loadURL(shortURL) {
+  return urlDatabase[shortURL];
+}
 
 
 
@@ -49,7 +49,6 @@ app.post('/urls/:id/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-
 app.get("/urls/:id", (req, res) => {
     let templateVars = { 
       shortURL: req.params.id, 
@@ -67,7 +66,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-// storing data in database
+// Storing data in database
 app.post("/urls", (req, res) => {
   const value = req.body.longURL;
   const key = createRandomString(6);
@@ -75,7 +74,11 @@ app.post("/urls", (req, res) => {
   res.send("Ok");         // Respond with 'Ok' (we will replace this)
 });
 
-
+// Editing url in database
+app.post("/urls/:id", (req, res) => {
+  saveURL(req.params.id, req.body.URL);
+  res.redirect("/urls");         
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
