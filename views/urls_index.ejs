@@ -7,10 +7,16 @@
   <ul>
       <% include partials/_header %>
     <% for(var urlDatabase in urls) { %>
-      <li><%= urls[urlDatabase] + ": " + urlDatabase %></li>
+      <li><%= urls[urlDatabase] + ": " + urlDatabase %>
+      <form action='/urls/<%=urlDatabase%>/delete' method='POST'>
+
+        <button type='submit'>Delete</button>
+      </form>
+    </li>
     <% } %>
   </ul>
-  <a href=""> Link</a>
+  
+  </form>
 </body>
 </html>
 
