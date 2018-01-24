@@ -5,7 +5,7 @@
 </head>
 <body>
   <ul>
-    <header>This is my header</header>
+      <% include partials/_header %>
     <% for(var urlDatabase in urls) { %>
       <li><%= urls[urlDatabase] + ": " + urlDatabase %></li>
     <% } %>
