@@ -1,5 +1,6 @@
 var express = require("express");
 var app = express();
+var cookieParser = require('cookie-parser')
 var PORT = process.env.PORT || 8080; // default port 8080
 
 
@@ -84,7 +85,6 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-
 function createRandomString (length) {
   var str = '';
   for (var i = 0; i < length; i++) {
@@ -92,5 +92,12 @@ function createRandomString (length) {
       return str.substr( 0, length );
   }
 }
+
+
+app.post("/login", (req, res) => {
+  res.cookie('username',req.body.username);
+});
+
+// app.post(cookieParser(secret, options)){}
 
 
