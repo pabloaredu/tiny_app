@@ -3,7 +3,7 @@ var app = express();
 var cookieParser = require('cookie-parser')
 var PORT = process.env.PORT || 8080; // default port 8080
 
-const database = require('./database');
+let database = require('./database');
 
 app.use(cookieParser());
 
@@ -14,7 +14,7 @@ var urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-
+// Saving data functions
 function saveURL(shortURL, longURL) {
   urlDatabase[shortURL] = longURL;
 }
@@ -24,6 +24,8 @@ function loadURL(shortURL) {
 }
 
 
+
+// Requests and responds to client
 app.get("/", (req, res) => {
   res.end("Hello!");
 });
@@ -39,7 +41,7 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   var usrName = '';
   if(req.cookies){
-    usrName = req.cookies["username"] ;
+    usrName = req.cookies["usrId"] ;
   }
   console.log('userName in get urls ',usrName);
   let templateVars = { 
@@ -63,7 +65,7 @@ app.post('/urls/:id/delete', (req, res) => {
 app.get("/urls/:id", (req, res) => {
   var usrName = '';
   if(req.cookies){
-    usrName = req.cookies["username"] ;
+    usrName = req.cookies["usrId"] ;
   } 
   let templateVars = { 
       shortURL: req.params.id, 
@@ -88,7 +90,7 @@ app.post("/urls", (req, res) => {
   const value = req.body.longURL;
   const key = createRandomString(6);
   saveURL(key, value);
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  res.send("Ok");         
 });
 
 // Editing url in database
@@ -108,14 +110,14 @@ function createRandomString (length) {
       return str.substr( 0, length );
   }
 }
-
+// Storing cookie
 app.post("/login", (req, res) => {
-  res.cookie('username',req.body.username);
+  res.cookie('usrId',req.body.username);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('usrId');
   res.redirect("/urls");
 });
 
@@ -126,37 +128,33 @@ app.get("/register", (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-
-  // Try and find the user with this email address
-  let user;
-  for (let userId in database.users) {
-    const dbUser = database.users[userId];
-
-    if (dbUser.email === email) {
-      user = dbUser;
-      break;
-    }
-  }
-
-  // check the password
-  if (user) {
-    if (bcrypt.compareSync(password, user.password)) {
-      // logged in
-      // send a cookie to the user 
-      req.session.userId = user.userId;
-      res.redirect('/');
-    } else {
-      res.status(401).send("💩");
-    }
+  var email = req.body.email;
+  var password = req.body.password;
+  var usrId = createRandomString(6);
+  if (!email|| !password) {
+    res.status(400).send("All fields are mandatory");
   } else {
-    res.status(401).send("💩");
-  }
-  
+    var sameEmailFound = false;
+      for (let usrId in database.users) {
+        let dbusr = database.users[usrId];
+        if (dbusr.email === email) {
+          sameEmailFound = true;
+          break;
+        }
+      }
+      if (!sameEmailFound){
+      dbusr = {};
+            dbusr.id = usrId;
+            dbusr.email = email;
+            dbusr.password = password;
+            res.cookie('usrId',dbusr.id);
+            res.redirect("/urls");
+      }
+      else{
+        res.status(400).send("E-mail already used");
+      }
+  } 
 });
-  }
-
-
+  
 
 
