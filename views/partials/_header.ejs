@@ -3,18 +3,23 @@
 <head>
   <title>TinyApp</title>
 </head>
-<body>
+  <body>
     <header><b>SHORTENER URL APP</b></header>
+    <% if(username){ %>
+     <%=username%>
+     <form action='/logout' method='POST'>
+        <button>Logout</button>
+    <% } else{ %>  
+      <form action='/login' method='POST'>
+        <div>
+          <label for="uname">Username: </label>
+          <input type="text" id="uname" name="username">
+        </div>
+        <div>
+          <button>Submit</button>
+        </div>
+      </form>
+    <% } %>
     
-    <form action='/login' method='POST'>
-      <div>
-        <label for="uname">Username: </label>
-        <input type="text" id="uname" name="username">
-      </div>
-      <div>
-        <button>Submit</button>
-      </div>
-    </form>
-
-</body>
+  </body>
 </html>
