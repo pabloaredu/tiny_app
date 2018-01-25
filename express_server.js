@@ -3,6 +3,8 @@ var app = express();
 var cookieParser = require('cookie-parser')
 var PORT = process.env.PORT || 8080; // default port 8080
 
+const database = require('./database');
+
 app.use(cookieParser());
 
 app.set("view engine", "ejs");
@@ -117,6 +119,43 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
+
+// Registration form
+app.get("/register", (req, res) => {
+  res.render("register");         
+});
+
+app.post('/register', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  // Try and find the user with this email address
+  let user;
+  for (let userId in database.users) {
+    const dbUser = database.users[userId];
+
+    if (dbUser.email === email) {
+      user = dbUser;
+      break;
+    }
+  }
+
+  // check the password
+  if (user) {
+    if (bcrypt.compareSync(password, user.password)) {
+      // logged in
+      // send a cookie to the user 
+      req.session.userId = user.userId;
+      res.redirect('/');
+    } else {
+      res.status(401).send("💩");
+    }
+  } else {
+    res.status(401).send("💩");
+  }
+  
+});
+  }
 
 
 
