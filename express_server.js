@@ -3,7 +3,7 @@ var app = express();
 var cookieParser = require('cookie-parser')
 var PORT = process.env.PORT || 8080; // default port 8080
 
-let database = require('./database');
+// let database = require('./database');
 
 app.use(cookieParser());
 
@@ -13,6 +13,22 @@ var urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+
+// USER DATABASE
+let database = {};
+database.users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
 
 // Saving data functions
 function saveURL(shortURL, longURL) {
@@ -39,17 +55,15 @@ app.get("/hello", (req, res) => {
   });
 
 app.get("/urls", (req, res) => {
-  var usrName = '';
-  if(req.cookies){
-    usrName = req.cookies["usrId"] ;
-  }
-  console.log('userName in get urls ',usrName);
+  var usrId = req.cookies["usrId"];
+
+  console.log('usrId in get urls ', usrId);
   let templateVars = { 
     urls: urlDatabase,
-    username: usrName
+    user: database.users[usrId]
   };
   res.render("urls_index", templateVars);
-  });
+});
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
@@ -70,7 +84,7 @@ app.get("/urls/:id", (req, res) => {
   let templateVars = { 
       shortURL: req.params.id, 
       longURL: urlDatabase[req.params.id],
-      username: usrName
+      username: database.users[usrId]
     };
     
     res.render("urls_show", templateVars);
@@ -112,8 +126,17 @@ function createRandomString (length) {
 }
 // Storing cookie
 app.post("/login", (req, res) => {
-  res.cookie('usrId',req.body.username);
-  res.redirect("/urls");
+  var email = req.body.email;
+  var password = req.body.password;
+  for (let usrId in database.users) {
+    let dbusr = database.users[usrId];
+    if (dbusr.email === email && dbusr.password === password) {
+      res.cookie('usrId', usrId);
+      res.redirect("/urls");
+      return; 
+    }
+  }
+  res.status(403).send("Wrong email or password");
 });
 
 app.post("/logout", (req, res) => {
@@ -130,31 +153,37 @@ app.get("/register", (req, res) => {
 app.post('/register', (req, res) => {
   var email = req.body.email;
   var password = req.body.password;
-  var usrId = createRandomString(6);
-  if (!email|| !password) {
+  if (!email || !password) {
     res.status(400).send("All fields are mandatory");
   } else {
     var sameEmailFound = false;
-      for (let usrId in database.users) {
-        let dbusr = database.users[usrId];
-        if (dbusr.email === email) {
-          sameEmailFound = true;
-          break;
-        }
+    for (let usrId in database.users) {
+      let dbusr = database.users[usrId];
+      if (dbusr.email === email) {
+        sameEmailFound = true;
+        break;
       }
-      if (!sameEmailFound){
-      dbusr = {};
-            dbusr.id = usrId;
-            dbusr.email = email;
-            dbusr.password = password;
-            res.cookie('usrId',dbusr.id);
-            res.redirect("/urls");
-      }
-      else{
-        res.status(400).send("E-mail already used");
-      }
+    }
+    if (!sameEmailFound){
+      var usrId = createRandomString(6);
+      let newUser = {
+        id: usrId,
+        email,
+        password
+      };
+      database.users[usrId] = newUser; 
+      res.cookie('usrId', newUser.id);
+      res.redirect("/urls");
+    } else{
+      res.status(400).send("E-mail already used");
+    }
   } 
 });
-  
+
+// Log in page
+app.get("/login", (req, res) => {
+  res.render("login");         
+});
+
 
 
