@@ -5,16 +5,15 @@
 </head>
 <body>
   <ul>
-    <% include partials/_header %>
+    <%- include partials/_header %>
     <% for(var urlDatabase in urls) { %>
-      <li><%= urls[urlDatabase] + ": " + urlDatabase %>
+      <li><%= urls[urlDatabase].url + ": " + urlDatabase %>
       <form action='/urls/<%=urlDatabase%>/delete' method='POST'>
         <button type='submit'>Delete</button>
       </form>
     </li>
     <% } %>
-  </ul>
-  
+  </ul>  
   </form>
 </body>
 </html>
