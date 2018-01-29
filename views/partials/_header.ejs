@@ -5,8 +5,8 @@
 </head>
   <body>
     <header><b>SHORTENER URL APP</b></header>
-    <% if (users["currentUserId"]) { %>
-      <%= users["currentUserId"].email %>
+    <% if (user) { %>
+      <%= user.email %>
       <form action='/logout' method='POST'>
         <button>Logout</button>
       </form>

@@ -6,14 +6,14 @@
 <body>
   <ul>
     <%- include partials/_header %>
-    <% for(var urlDatabase in urls) { %>
-      <li><%= urls[urlDatabase].url + ": " + urlDatabase %>
-      <form action='/urls/<%=urlDatabase%>/delete' method='POST'>
+    <% for(var u in urls) { %>
+      <li><%= urls[u].url + ": " + urls[u].url_short %>
+      <form action='/urls/<%=u%>/delete' method='POST'>
         <button type='submit'>Delete</button>
       </form>
     </li>
     <% } %>
-  </ul>  
+  </ul>
   </form>
 </body>
 </html>
