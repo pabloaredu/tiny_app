@@ -2,7 +2,8 @@ var express = require("express");
 var app = express();
 var cookieParser = require('cookie-parser')
 var PORT = process.env.PORT || 8080; // default port 8080
-
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -21,12 +22,12 @@ users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur", saltRounds)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password:bcrypt.hashSync("dishwasher-funk",saltRounds)
   }
 }
 
@@ -47,17 +48,18 @@ function createRandomString (length) {
   }
 }
 
-// function urlsForUser(id) {
-//   var singleUserDatabase = {};
-//   for (i = 0; i <= users.length; i++) {
-//     if(id === users.id) {
-//       singleUserDatabase = {
-//         url = urlDatabase.url
-//       }
-//     }
-//   }
-//   return templateVars;
-// }
+function urlsForUser(database,userId) {
+  var list=[];
+  for(url in database) {
+    var urlObject = database[url];
+    console.log('urlObject',urlObject);
+    if(urlObject.userId === userId) {
+      urlObject.url_short=url;
+      list.push(urlObject);
+    }
+  }
+  return list;
+}
 
 
 
@@ -70,20 +72,18 @@ app.get("/urls.json", (req, res) => {
   });
 
 
-// Working here <------ ********************************
 // RENDER URLS PER USER
 app.get("/urls", (req, res) => {
   if (users[req.cookies["currentUserId"]]) {
     console.log(users[req.cookies["currentUserId"]].id)
-    var usrId = req.cookies["currentUserId"].id;
+    var usrId = users[req.cookies["currentUserId"]].id;
     let templateVars = {
-      urls: urlDatabase,
+      urls: urlsForUser(urlDatabase,usrId),
       user: users[usrId]
     };
     res.render("urls_index", templateVars);
   } else {
     res.redirect("/login");
-    console.log("wrong way")// GET RID OF THIS CONSOLE LOG
   }
 });
 
@@ -139,11 +139,12 @@ app.post("/login", (req, res) => {
   var password = req.body.password;
   for (let currentUserId in users) {
     let dbuser = users[currentUserId];
-    if (dbuser.email === email && dbuser.password === password) {
+    if (dbuser.email === email && bcrypt.compareSync(password, dbuser.password)) {
       res.cookie("currentUserId", currentUserId);
       res.redirect("/urls");
       return;
     }
+  }
   }
   res.status(403).send("Wrong email or password");
 });
@@ -164,7 +165,7 @@ app.listen(PORT, () => {
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('userId');
+  res.clearCookie('currentUserId');
   res.redirect("/urls");
 });
 
@@ -189,14 +190,17 @@ app.post('/register', (req, res) => {
     }
     if (!sameEmailFound){
       var usrId = createRandomString(6);
-      let newUser = {
-        id: usrId,
-        email,
-        password
-      };
-      users[usrId] = newUser;
-      res.cookie('usrId', newUser.id);
-      res.redirect("/urls");
+      bcrypt.hash(password, saltRounds, function(err, hash) {
+        console.log('hash',hash);
+        let newUser = {
+          id: usrId,
+          email:email,
+          password:hash
+        };
+        users[usrId] = newUser;
+        res.cookie('currentUserId', newUser.id);
+        res.redirect("/urls");
+      });
     } else{
       res.status(400).send("E-mail already used");
     }
