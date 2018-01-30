@@ -1,11 +1,16 @@
 var express = require("express");
 var app = express();
-var cookieParser = require('cookie-parser')
+// var cookieParser = require('cookie-parser')
+var cookieSession = require('cookie-session')
+
+
 var PORT = process.env.PORT || 8080; // default port 8080
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
-app.use(cookieParser());
+
+// app.use(cookieParser());
+app.use(cookieSession({keys:['key1']}));
 app.set("view engine", "ejs");
 
 
@@ -74,9 +79,10 @@ app.get("/urls.json", (req, res) => {
 
 // RENDER URLS PER USER
 app.get("/urls", (req, res) => {
-  if (users[req.cookies["currentUserId"]]) {
-    console.log(users[req.cookies["currentUserId"]].id)
-    var usrId = users[req.cookies["currentUserId"]].id;
+  if (users[req.session.currentUserId]) {
+    console.log(req.session.currentUserId);
+    console.log(users[req.session.currentUserId].id)
+    var usrId = users[req.session.currentUserId].id;
     let templateVars = {
       urls: urlsForUser(urlDatabase,usrId),
       user: users[usrId]
@@ -89,7 +95,7 @@ app.get("/urls", (req, res) => {
 
 // rendering page to add new url
 app.get("/urls/new", (req, res) => {
-  if (users[req.cookies["usrId"]]) {
+  if (users[req.session.currentUserId]) {
     res.render("urls_new");
   } else {
     res.redirect("/login");
@@ -98,7 +104,7 @@ app.get("/urls/new", (req, res) => {
 
 // deleting a url from database
 app.post('/urls/:id/delete', (req, res) => {
-  if(users[req.cookies["usrId"]]){
+  if(users[req.session["usrId"]]){
     delete urlDatabase[req.params.id];
     res.redirect('/urls');
   } else {
@@ -107,7 +113,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  var usrId = req.cookies["usrId"];
+  var usrId = req.session["usrId"];
   let templateVars = {
       shortURL: req.params.id,
       longURL: urlDatabase[req.params.id].url,
@@ -140,18 +146,18 @@ app.post("/login", (req, res) => {
   for (let currentUserId in users) {
     let dbuser = users[currentUserId];
     if (dbuser.email === email && bcrypt.compareSync(password, dbuser.password)) {
-      res.cookie("currentUserId", currentUserId);
+      // res.session("currentUserId", currentUserId);
+      req.session.currentUserId = currentUserId;
       res.redirect("/urls");
       return;
     }
-  }
   }
   res.status(403).send("Wrong email or password");
 });
 
 // Editing url in database
 app.post("/urls/:id", (req, res) => {
-  if(users[req.cookies["userId"]]){
+  if(users[req.session.currentUserId]){
     saveURL(req.params.id, req.body.URL);
     res.redirect('/urls');
   } else {
@@ -165,7 +171,8 @@ app.listen(PORT, () => {
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('currentUserId');
+  // res.clearCookie('currentUserId');
+  req.session = null;
   res.redirect("/urls");
 });
 
@@ -191,14 +198,15 @@ app.post('/register', (req, res) => {
     if (!sameEmailFound){
       var usrId = createRandomString(6);
       bcrypt.hash(password, saltRounds, function(err, hash) {
-        console.log('hash',hash);
+        // console.log('hash',hash);
         let newUser = {
           id: usrId,
           email:email,
           password:hash
         };
         users[usrId] = newUser;
-        res.cookie('currentUserId', newUser.id);
+        // res.session('currentUserId', newUser.id);
+        req.session.currentUserId = newUser.id;
         res.redirect("/urls");
       });
     } else{
