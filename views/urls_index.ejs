@@ -8,13 +8,14 @@
     <%- include partials/_header %>
     <% for(var u in urls) { %>
       <li><%= urls[u].url + ": " + urls[u].url_short %>
-      <form action='/urls/<%=u%>/delete' method='POST'>
+      <form action='/urls/<%= urls[u].url_short %>/delete' method='POST'>
         <button type='submit'>Delete</button>
       </form>
     </li>
     <% } %>
   </ul>
   </form>
+  <a href="/urls/new"> Create New </a>
 </body>
 </html>
 
