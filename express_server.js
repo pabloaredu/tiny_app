@@ -1,8 +1,9 @@
 var express = require("express");
 var app = express();
 // var cookieParser = require('cookie-parser')
-var cookieSession = require('cookie-session')
-
+var cookieSession = require('cookie-session');
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({extended: true}));
 
 var PORT = process.env.PORT || 8080; // default port 8080
 const bcrypt = require('bcrypt');
@@ -11,6 +12,7 @@ const saltRounds = 10;
 
 // app.use(cookieParser());
 app.use(cookieSession({keys:['key1']}));
+app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 
 
@@ -23,7 +25,7 @@ var urlDatabase = {
 };
 
 // USER DATABASE
-users = {
+const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
@@ -37,8 +39,12 @@ users = {
 }
 
 // FUNCTIONS
-function saveURL(shortURL, longURL) {
-  urlDatabase[shortURL].url = longURL;
+function saveURL(shortURL, longURL, userId) {
+  urlDatabase[shortURL] = {
+    url: longURL,
+    userId: userId
+  };
+  // urlDatabase[shortURL].url = longURL;
 }
 
 function loadURL(shortURL) {
@@ -55,11 +61,11 @@ function createRandomString (length) {
 
 function urlsForUser(database,userId) {
   var list=[];
-  for(url in database) {
-    var urlObject = database[url];
+  for(shortUrl in database) {
+    var urlObject = database[shortUrl];
     console.log('urlObject',urlObject);
     if(urlObject.userId === userId) {
-      urlObject.url_short=url;
+      urlObject.url_short=shortUrl;
       list.push(urlObject);
     }
   }
@@ -95,8 +101,14 @@ app.get("/urls", (req, res) => {
 
 // rendering page to add new url
 app.get("/urls/new", (req, res) => {
-  if (users[req.session.currentUserId]) {
-    res.render("urls_new");
+  console.log(users[req.session.currentUserId].id);
+  if (users[req.session.currentUserId].id) {
+    var usrId = users[req.session.currentUserId].id;
+    let templateVars = {
+      urls: urlsForUser(urlDatabase,usrId),
+      user: users[usrId]
+    };
+    res.render("urls_new", templateVars);
   } else {
     res.redirect("/login");
   }
@@ -104,7 +116,7 @@ app.get("/urls/new", (req, res) => {
 
 // deleting a url from database
 app.post('/urls/:id/delete', (req, res) => {
-  if(users[req.session["usrId"]]){
+  if(users[req.session.currentUserId]){
     delete urlDatabase[req.params.id];
     res.redirect('/urls');
   } else {
@@ -113,7 +125,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  var usrId = req.session["usrId"];
+  var usrId = req.session.currentUserId;
   let templateVars = {
       shortURL: req.params.id,
       longURL: urlDatabase[req.params.id].url,
@@ -122,21 +134,19 @@ app.get("/urls/:id", (req, res) => {
     res.render("urls_show", templateVars);
   });
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
-
 // loading data from database
 app.get("/u/:shortURL", (req, res) => {
   const longURL = loadURL(req.params.shortURL);
   res.redirect(longURL);
 });
 
-// Storing data in database (creating new url)
+// Storing url in database (creating new url)
 app.post("/urls", (req, res) => {
   const value = req.body.longURL;
   const key = createRandomString(6);
-  saveURL(key, value);
-  res.send("Ok");
+  const userId = req.session.currentUserId;
+  saveURL(key, value, userId);
+  res.redirect('/urls'); // I have to redirect my user to urls///////////
 });
 
 // Storing cookie
