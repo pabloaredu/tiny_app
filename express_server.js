@@ -1,24 +1,18 @@
-var express = require("express");
-var app = express();
-// var cookieParser = require('cookie-parser')
-var cookieSession = require('cookie-session');
+const express = require("express");
+const app = express();
+const cookieSession = require('cookie-session');
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
-
-var PORT = process.env.PORT || 8080; // default port 8080
+const PORT = process.env.PORT || 8080; // default port 8080
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
-
-// app.use(cookieParser());
 app.use(cookieSession({keys:['key1']}));
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 
-
 // URL DATABASE
 var urlDatabase = {
-    b2xVn2: {url: "http://www.lighthouselabs.ca",
+    "b2xVn2": {url: "http://www.lighthouselabs.ca",
             userId: "userRandomID"},
     "9sm5xK": {url:"http://www.google.com",
              userId: "user2RandomID"}
@@ -44,7 +38,6 @@ function saveURL(shortURL, longURL, userId) {
     url: longURL,
     userId: userId
   };
-  // urlDatabase[shortURL].url = longURL;
 }
 
 function loadURL(shortURL) {
@@ -63,7 +56,6 @@ function urlsForUser(database,userId) {
   var list=[];
   for(shortUrl in database) {
     var urlObject = database[shortUrl];
-    console.log('urlObject',urlObject);
     if(urlObject.userId === userId) {
       urlObject.url_short=shortUrl;
       list.push(urlObject);
@@ -71,8 +63,6 @@ function urlsForUser(database,userId) {
   }
   return list;
 }
-
-
 
 app.get("/", (req, res) => {
   res.end("Hello!");
@@ -82,12 +72,9 @@ app.get("/urls.json", (req, res) => {
     res.json(urlDatabase);
   });
 
-
-// RENDER URLS PER USER
+// Render urls per user
 app.get("/urls", (req, res) => {
   if (users[req.session.currentUserId]) {
-    console.log(req.session.currentUserId);
-    console.log(users[req.session.currentUserId].id)
     var usrId = users[req.session.currentUserId].id;
     let templateVars = {
       urls: urlsForUser(urlDatabase,usrId),
@@ -99,9 +86,8 @@ app.get("/urls", (req, res) => {
   }
 });
 
-// rendering page to add new url
+// Adding new url
 app.get("/urls/new", (req, res) => {
-  console.log(users[req.session.currentUserId].id);
   if (users[req.session.currentUserId].id) {
     var usrId = users[req.session.currentUserId].id;
     let templateVars = {
@@ -114,7 +100,7 @@ app.get("/urls/new", (req, res) => {
   }
  });
 
-// deleting a url from database
+// Deleting a url from database
 app.post('/urls/:id/delete', (req, res) => {
   if(users[req.session.currentUserId]){
     delete urlDatabase[req.params.id];
@@ -134,7 +120,7 @@ app.get("/urls/:id", (req, res) => {
     res.render("urls_show", templateVars);
   });
 
-// loading data from database
+// Loading url from database
 app.get("/u/:shortURL", (req, res) => {
   const longURL = loadURL(req.params.shortURL);
   res.redirect(longURL);
@@ -146,7 +132,7 @@ app.post("/urls", (req, res) => {
   const key = createRandomString(6);
   const userId = req.session.currentUserId;
   saveURL(key, value, userId);
-  res.redirect('/urls'); // I have to redirect my user to urls///////////
+  res.redirect('/urls');
 });
 
 // Storing cookie
@@ -156,7 +142,6 @@ app.post("/login", (req, res) => {
   for (let currentUserId in users) {
     let dbuser = users[currentUserId];
     if (dbuser.email === email && bcrypt.compareSync(password, dbuser.password)) {
-      // res.session("currentUserId", currentUserId);
       req.session.currentUserId = currentUserId;
       res.redirect("/urls");
       return;
@@ -165,7 +150,7 @@ app.post("/login", (req, res) => {
   res.status(403).send("Wrong email or password");
 });
 
-// Editing url in database
+// Editing url in database <-----********* Fixing here
 app.post("/urls/:id", (req, res) => {
   if(users[req.session.currentUserId]){
     saveURL(req.params.id, req.body.URL);
@@ -179,9 +164,7 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-
 app.post("/logout", (req, res) => {
-  // res.clearCookie('currentUserId');
   req.session = null;
   res.redirect("/urls");
 });
@@ -208,14 +191,12 @@ app.post('/register', (req, res) => {
     if (!sameEmailFound){
       var usrId = createRandomString(6);
       bcrypt.hash(password, saltRounds, function(err, hash) {
-        // console.log('hash',hash);
         let newUser = {
           id: usrId,
           email:email,
           password:hash
         };
         users[usrId] = newUser;
-        // res.session('currentUserId', newUser.id);
         req.session.currentUserId = newUser.id;
         res.redirect("/urls");
       });
@@ -229,6 +210,3 @@ app.post('/register', (req, res) => {
 app.get("/login", (req, res) => {
   res.render("login");
 });
-
-
-
