@@ -7,13 +7,13 @@
   <ul>
     <%- include partials/_header %>
     <% for(var u in urls) { %>
-      <li><%= urls[u].url + ": " + urls[u].url_short %>
+      <li style:"color: white;"><%= urls[u].url + ": " + urls[u].url_short %>
       <form action='/urls/<%= urls[u].url_short %>/delete' method='POST'>
         <button type='submit'>Delete</button>
       </form>
     </li>
     <li style="color:white;">
-    <!-- <a href="/urls/:id"> Edit </a> Fixing here-->
+    <a href="/urls/<%= urls[u].url_short %>"> Edit </a>
     </li>
     <% } %>
   </ul>
