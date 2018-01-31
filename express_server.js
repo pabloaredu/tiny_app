@@ -110,6 +110,7 @@ app.post('/urls/:id/delete', (req, res) => {
   }
 });
 
+// Edit url page
 app.get("/urls/:id", (req, res) => {
   var usrId = req.session.currentUserId;
   let templateVars = {
@@ -150,10 +151,10 @@ app.post("/login", (req, res) => {
   res.status(403).send("Wrong email or password");
 });
 
-// Editing url in database <-----********* Fixing here
+// Editing url in database
 app.post("/urls/:id", (req, res) => {
   if(users[req.session.currentUserId]){
-    saveURL(req.params.id, req.body.URL);
+    saveURL(req.params.id, req.body.URL, req.session.currentUserId);
     res.redirect('/urls');
   } else {
     res.redirect("/login");
